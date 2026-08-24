@@ -1,0 +1,85 @@
+{
+  "name": "tasklog",
+  "displayName": "Task Log",
+  "description": "枝分かれする調査ログを、書式を制約せずに記録しながら、必要な範囲だけを軽量にタスク化するための個人用VSCode拡張",
+  "version": "0.0.1",
+  "publisher": "local",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "taskLog.createTaskFromSelection",
+        "title": "Task Log: 選択範囲からタスクを作成"
+      },
+      {
+        "command": "taskLog.setParent",
+        "title": "Task Log: 親タスクを設定"
+      },
+      {
+        "command": "taskLog.setFocus",
+        "title": "Task Log: タスクにフォーカス"
+      },
+      {
+        "command": "taskLog.clearFocus",
+        "title": "Task Log: フォーカスを解除"
+      },
+      {
+        "command": "taskLog.markDone",
+        "title": "Task Log: タスクを完了にする"
+      },
+      {
+        "command": "taskLog.markOpen",
+        "title": "Task Log: タスクを未完了に戻す"
+      },
+      {
+        "command": "taskLog.deleteTask",
+        "title": "Task Log: タスクを削除"
+      },
+      {
+        "command": "taskLog.reanchorTask",
+        "title": "Task Log: アンカーを再設定"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "taskLog.tree",
+          "name": "Task Tree"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
+    "vscode:prepublish": "npm run package",
+    "test:unit": "vitest run",
+    "test:integration": "node ./out/test/integration/runTest.js",
+    "pretest:integration": "tsc -p . --outDir out",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.3.9",
+    "esbuild": "^0.20.2",
+    "eslint": "^9.1.0",
+    "glob": "^10.3.12",
+    "mocha": "^10.4.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^1.5.0"
+  }
+}
