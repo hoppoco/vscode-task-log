@@ -4,54 +4,24 @@
 
 ```
 (リポジトリルート)/
-├── .steering/                      # 作業単位のステアリングドキュメント
-├── docs/                           # 永続的ドキュメント
-├── .vscode/
-│   ├── launch.json                 # F5での拡張機能デバッグ起動設定
-│   ├── tasks.json                  # デバッグ起動前のビルドタスク
-│   └── extensions.json             # 開発時の推奨拡張機能
+├── .steering/           # 作業単位のステアリングドキュメント
+├── docs/                # 永続的ドキュメント
+├── .vscode/             # デバッグ起動設定・推奨拡張機能
 ├── src/
-│   ├── extension.ts                # 拡張のエントリポイント(activate/deactivate)
-│   ├── models/
-│   │   └── task.ts                 # Taskの型定義
-│   ├── services/                   # VSCode APIに依存しない純粋ロジック中心
-│   │   ├── markerAnchorService.ts  # マーカーの挿入・解決ロジック
-│   │   ├── taskLocator.ts          # 行範囲を含む最も内側のタスクを求める
-│   │   ├── taskStore.ts            # タスクの永続化・CRUD・親子操作・アンカー再設定
-│   │   ├── stallDetector.ts        # 停滞判定ロジック(Phase 2)
-│   │   ├── summaryGenerator.ts     # 要約テキストの組み立て(Phase 2)
-│   │   └── jiraClient.ts           # Jira REST APIクライアント(Phase 2)
-│   ├── views/                      # VSCode APIに依存するUI層
-│   │   ├── taskTreeViewProvider.ts
-│   │   ├── taskTreeDragAndDropController.ts # ツリー上のD&Dで親を変更
-│   │   ├── cursorSyncController.ts # カーソル位置に対応するツリー項目のハイライト
-│   │   ├── statusBarController.ts
-│   │   └── taskCodeLensProvider.ts # ログ編集中、マーカー範囲直上へのタスク名表示
-│   ├── commands/                   # コマンドハンドラ(servicesを呼び出す薄い層)
-│   │   ├── createTaskFromSelection.ts
-│   │   ├── setParent.ts
-│   │   ├── setFocus.ts
-│   │   ├── markStatus.ts
-│   │   ├── reanchorTask.ts
-│   │   ├── deleteTask.ts
-│   │   ├── revealTaskInEditor.ts   # ツリー項目クリックでログの該当箇所を開く
-│   │   ├── toggleStatusAtCursor.ts # カーソル位置のタスクのステータス切替
-│   │   ├── linkJiraIssue.ts        # Phase 2
-│   │   ├── pushSummaryToJira.ts    # Phase 2
-│   │   ├── pickTask.ts             # タスク選択QuickPickの共通処理
-│   │   └── markerEditing.ts        # 選択範囲へのマーカー挿入の共通処理
+│   ├── extension.ts     # 拡張のエントリポイント(activate/deactivate)
+│   ├── models/          # データ構造の型定義(例: task.ts)
+│   ├── services/        # vscode非依存の純粋ロジック(例: taskStore.ts, markerAnchorService.ts)
+│   ├── views/           # vscode APIに依存するUI層(例: taskTreeViewProvider.ts)
+│   ├── commands/        # コマンドハンドラと共通処理(例: createTaskFromSelection.ts, pickTask.ts)
 │   └── test/
-│       ├── unit/                   # Vitestによる純粋ロジックの単体テスト
-│       └── integration/            # @vscode/test-electronによる結合テスト
-├── esbuild.js                      # バンドル設定
-├── package.json                    # 拡張マニフェスト(contributes, activationEvents等を含む)
-├── package-lock.json
-├── tsconfig.json
-├── eslint.config.js
-├── .prettierrc
-├── .gitignore
-└── .vscodeignore                   # .vsix化時の除外設定
+│       ├── unit/        # Vitestによる純粋ロジックの単体テスト
+│       └── integration/ # @vscode/test-electronによる結合テスト
+├── esbuild.js / package.json / tsconfig.json / eslint.config.js / .prettierrc
+│                        # ビルド・Lint・型チェックの設定一式
+└── .vscodeignore        # .vsix化時の除外設定
 ```
+
+網羅的なファイル一覧は持たない(実際の構成は`src/`配下を参照すればよく、二重管理を避けるため)。各ディレクトリに何をどう置くかは、次の「2. ディレクトリの役割」「3. ファイル配置ルール」を判断基準とする。
 
 ## 2. ディレクトリの役割
 
