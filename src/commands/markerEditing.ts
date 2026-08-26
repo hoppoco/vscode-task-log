@@ -5,12 +5,14 @@ import {
   type LineRange,
 } from '../services/markerAnchorService';
 
-/** エディタの選択範囲を行範囲に変換する。空選択の場合はエラーを表示してundefinedを返す */
-export function selectionToLineRange(editor: vscode.TextEditor): LineRange | undefined {
+/**
+ * エディタの選択範囲を行範囲に変換する。
+ * 選択が空の場合は、カーソルのある行1行を範囲として返す。
+ */
+export function selectionToLineRange(editor: vscode.TextEditor): LineRange {
   const selection = editor.selection;
   if (selection.isEmpty) {
-    vscode.window.showErrorMessage('範囲を選択してください');
-    return undefined;
+    return { startLine: selection.active.line, endLine: selection.active.line };
   }
 
   const startLine = selection.start.line;

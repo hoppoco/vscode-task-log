@@ -37,9 +37,6 @@ export function registerReanchorTask(
     }
 
     const lineRange = selectionToLineRange(editor);
-    if (!lineRange) {
-      return;
-    }
 
     const inserted = await applyMarkerInsertion(editor, lineRange);
     if (!inserted) {

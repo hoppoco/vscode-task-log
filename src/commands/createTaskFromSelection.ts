@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { findInnermostContainingTask } from '../services/taskLocator';
 import type { TaskStore } from '../services/taskStore';
 import type { StatusBarController } from '../views/statusBarController';
 import type { TaskCodeLensProvider } from '../views/taskCodeLensProvider';
@@ -19,9 +20,6 @@ export function registerCreateTaskFromSelection(
     }
 
     const lineRange = selectionToLineRange(editor);
-    if (!lineRange) {
-      return;
-    }
 
     const selectedText = editor.document.getText(editor.selection);
     const suggestedTitle = selectedText.trim().split('\n')[0]?.slice(0, 40) || '無題のタスク';
@@ -36,6 +34,20 @@ export function registerCreateTaskFromSelection(
       return;
     }
 
+    // 親のデフォルトは、(1)選択範囲を包含する既存タスクがあればそれを最優先、
+    // (2)無ければ現在のフォーカス、(3)どちらも無ければルートとする。
+    const sameFileTasks = taskStore
+      .getAll()
+      .filter((task) => task.logFilePath === editor.document.uri.fsPath);
+    const containingTask = findInnermostContainingTask(
+      editor.document.getText(),
+      lineRange,
+      sameFileTasks,
+    );
+    const parentTaskId = containingTask
+      ? containingTask.id
+      : (statusBar.getFocusedTaskId() ?? null);
+
     const inserted = await applyMarkerInsertion(editor, lineRange);
     if (!inserted) {
       return;
@@ -44,7 +56,7 @@ export function registerCreateTaskFromSelection(
     try {
       const task = await taskStore.create({
         title: title || suggestedTitle,
-        parentTaskId: statusBar.getFocusedTaskId() ?? null,
+        parentTaskId,
         logFilePath: editor.document.uri.fsPath,
         anchorStartMarkerId: inserted.anchorStartMarkerId,
         anchorEndMarkerId: inserted.anchorEndMarkerId,

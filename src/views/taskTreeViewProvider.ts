@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { Task } from '../models/task';
 import type { TaskStore } from '../services/taskStore';
@@ -18,8 +19,15 @@ export class TaskTreeItem extends vscode.TreeItem {
       hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
     );
     this.id = task.id;
-    this.contextValue = 'taskLog.task';
-    this.description = task.status === 'done' ? '完了' : undefined;
+    // ステータス別に分けることで、package.jsonのmenus.view/item/contextのwhen句から
+    // 「完了/未完了それぞれの場合だけインラインボタンを出す」といった出し分けができる
+    this.contextValue = task.status === 'done' ? 'taskLog.task.done' : 'taskLog.task.open';
+    this.description = this.buildDescription(task);
+    this.command = {
+      command: 'taskLog.revealTaskInEditor',
+      title: 'ログの該当箇所を開く',
+      arguments: [task],
+    };
     if (!isAnchorConnected) {
       this.iconPath = new vscode.ThemeIcon(
         'warning',
@@ -31,6 +39,11 @@ export class TaskTreeItem extends vscode.TreeItem {
     } else {
       this.iconPath = new vscode.ThemeIcon('circle-outline');
     }
+  }
+
+  private buildDescription(task: Task): string {
+    const fileName = path.basename(task.logFilePath);
+    return task.status === 'done' ? `完了 · ${fileName}` : fileName;
   }
 }
 

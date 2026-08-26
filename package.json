@@ -33,11 +33,13 @@
       },
       {
         "command": "taskLog.markDone",
-        "title": "Task Log: タスクを完了にする"
+        "title": "Task Log: タスクを完了にする",
+        "icon": "$(circle-outline)"
       },
       {
         "command": "taskLog.markOpen",
-        "title": "Task Log: タスクを未完了に戻す"
+        "title": "Task Log: タスクを未完了に戻す",
+        "icon": "$(pass)"
       },
       {
         "command": "taskLog.deleteTask",
@@ -46,6 +48,14 @@
       {
         "command": "taskLog.reanchorTask",
         "title": "Task Log: アンカーを再設定"
+      },
+      {
+        "command": "taskLog.revealTaskInEditor",
+        "title": "Task Log: ログの該当箇所を開く"
+      },
+      {
+        "command": "taskLog.toggleStatusAtCursor",
+        "title": "Task Log: カーソル位置のタスクのステータスを切り替え"
       }
     ],
     "views": {
@@ -53,6 +63,20 @@
         {
           "id": "taskLog.tree",
           "name": "Task Tree"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "taskLog.markDone",
+          "when": "view == taskLog.tree && viewItem == taskLog.task.open",
+          "group": "inline"
+        },
+        {
+          "command": "taskLog.markOpen",
+          "when": "view == taskLog.tree && viewItem == taskLog.task.done",
+          "group": "inline"
         }
       ]
     }

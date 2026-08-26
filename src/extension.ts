@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
+import type { Task } from './models/task';
 import { TaskStore, type TaskStorage } from './services/taskStore';
 import { TaskTreeViewProvider, type TaskLogFileReader } from './views/taskTreeViewProvider';
+import { TaskTreeDragAndDropController } from './views/taskTreeDragAndDropController';
+import { CursorSyncController } from './views/cursorSyncController';
 import { StatusBarController } from './views/statusBarController';
 import { TaskCodeLensProvider } from './views/taskCodeLensProvider';
 import { registerCreateTaskFromSelection } from './commands/createTaskFromSelection';
@@ -9,6 +12,8 @@ import { registerSetFocus } from './commands/setFocus';
 import { registerMarkStatus } from './commands/markStatus';
 import { registerDeleteTask } from './commands/deleteTask';
 import { registerReanchorTask } from './commands/reanchorTask';
+import { registerRevealTaskInEditor } from './commands/revealTaskInEditor';
+import { registerToggleStatusAtCursor } from './commands/toggleStatusAtCursor';
 
 function isFileNotFound(error: unknown): boolean {
   return error instanceof vscode.FileSystemError && error.code === 'FileNotFound';
@@ -81,9 +86,19 @@ export async function activate(
   const treeProvider = new TaskTreeViewProvider(taskStore, createLogFileReader());
   const statusBar = new StatusBarController(taskStore);
   const codeLensProvider = new TaskCodeLensProvider(taskStore);
+  const dragAndDropController = new TaskTreeDragAndDropController(taskStore, () =>
+    treeProvider.refresh(),
+  );
+
+  const treeView = vscode.window.createTreeView<Task>('taskLog.tree', {
+    treeDataProvider: treeProvider,
+    dragAndDropController,
+  });
+  const cursorSync = new CursorSyncController(taskStore, treeView);
 
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('taskLog.tree', treeProvider),
+    treeView,
+    cursorSync,
     vscode.languages.registerCodeLensProvider(
       [{ scheme: 'file' }, { scheme: 'untitled' }],
       codeLensProvider,
@@ -95,9 +110,20 @@ export async function activate(
     ...registerMarkStatus(taskStore, treeProvider, codeLensProvider),
     registerDeleteTask(taskStore, treeProvider, codeLensProvider),
     registerReanchorTask(taskStore, treeProvider, codeLensProvider),
+    registerRevealTaskInEditor(),
+    registerToggleStatusAtCursor(taskStore, treeProvider, codeLensProvider),
     // ログファイル保存のたびにツリーを再描画し、マーカーの手動編集・削除を
     // (キー入力毎ではなく保存単位で)アンカー未接続表示に反映する
     vscode.workspace.onDidSaveTextDocument(() => treeProvider.refresh()),
+    // カーソル位置に対応するタスクをツリー上でハイライトする(フォーカスには影響しない)
+    vscode.window.onDidChangeTextEditorSelection((event) =>
+      cursorSync.handleSelectionChange(event.textEditor),
+    ),
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (editor) {
+        cursorSync.handleSelectionChange(editor);
+      }
+    }),
   );
 
   // 結合テストから内部状態を検証できるようにするための公開API

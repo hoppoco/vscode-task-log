@@ -16,12 +16,15 @@
 │   │   └── task.ts                 # Taskの型定義
 │   ├── services/                   # VSCode APIに依存しない純粋ロジック中心
 │   │   ├── markerAnchorService.ts  # マーカーの挿入・解決ロジック
+│   │   ├── taskLocator.ts          # 行範囲を含む最も内側のタスクを求める
 │   │   ├── taskStore.ts            # タスクの永続化・CRUD・親子操作・アンカー再設定
 │   │   ├── stallDetector.ts        # 停滞判定ロジック(Phase 2)
 │   │   ├── summaryGenerator.ts     # 要約テキストの組み立て(Phase 2)
 │   │   └── jiraClient.ts           # Jira REST APIクライアント(Phase 2)
 │   ├── views/                      # VSCode APIに依存するUI層
 │   │   ├── taskTreeViewProvider.ts
+│   │   ├── taskTreeDragAndDropController.ts # ツリー上のD&Dで親を変更
+│   │   ├── cursorSyncController.ts # カーソル位置に対応するツリー項目のハイライト
 │   │   ├── statusBarController.ts
 │   │   └── taskCodeLensProvider.ts # ログ編集中、マーカー範囲直上へのタスク名表示
 │   ├── commands/                   # コマンドハンドラ(servicesを呼び出す薄い層)
@@ -31,6 +34,8 @@
 │   │   ├── markStatus.ts
 │   │   ├── reanchorTask.ts
 │   │   ├── deleteTask.ts
+│   │   ├── revealTaskInEditor.ts   # ツリー項目クリックでログの該当箇所を開く
+│   │   ├── toggleStatusAtCursor.ts # カーソル位置のタスクのステータス切替
 │   │   ├── linkJiraIssue.ts        # Phase 2
 │   │   ├── pushSummaryToJira.ts    # Phase 2
 │   │   ├── pickTask.ts             # タスク選択QuickPickの共通処理
