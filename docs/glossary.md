@@ -17,7 +17,7 @@
 | ルートタスク | 親を持たないタスク。Jiraチケットとの紐付けの起点となることが多いが、特別な種類のタスクではない |
 | 部分木 | あるタスクと、その配下に連なる子孫タスク全体 |
 | 停滞 | タスクの最終更新から、設定した時間閾値を超えて更新がない状態 |
-| 要約 | タスク(またはその部分木)に紐づくログ内容から生成される、Jiraへの報告用テキスト |
+| 要約 | タスク(またはその部分木)配下のタイトルとステータスを、階層構造が分かる形式で並べた、Jiraへの報告用テキスト。ログ本文の抜粋やAIによる自然文生成は行わない。投稿前にエディタでプレビュー・編集できる |
 | 紐付け | タスクとJiraチケットを関連付けること。同じ部分木内でも、祖先と異なるチケットへの紐付けを許容する |
 | 一方向連携 | タスクツリー側でどれだけ枝分かれしても、Jira側にサブタスクやチケットが新規作成されることはなく、要約コメントの投稿のみで連携する方式 |
 
@@ -73,6 +73,7 @@
 | フォーカス | `setFocus` / `clearFocus`(コマンド名) |
 | ツリーハイライト | `CursorSyncController`、`TreeView.reveal()` |
 | 停滞 | `stalled`(`status`の一値)、`StallDetector`(サービス名) |
-| 要約 | `SummaryGenerator`(サービス名)、`pushSummaryToJira`(コマンド名) |
-| 紐付け | `jiraIssueKey`(タスクの属性)、`linkJiraIssue`(コマンド名) |
+| 要約 | `buildSummary`関数(`src/services/summaryGenerator.ts`)、`pushSummaryToJira`(コマンド名) |
+| 紐付け | `jiraIssueKey`(タスクの属性)、`linkJiraIssue`(コマンド名)、`TaskStore.setJiraLink` / `findNearestJiraLinkedTask` |
 | 部分木を祖先の要約に含めるか | `includeInAncestorSummary` |
+| Jira接続設定 | `getJiraClient`(`src/commands/getJiraClient.ts`)、`setJiraApiToken`(コマンド名)、`taskLog.jira.baseUrl` / `taskLog.jira.email`(拡張設定) |

@@ -14,6 +14,9 @@ import { registerDeleteTask } from './commands/deleteTask';
 import { registerReanchorTask } from './commands/reanchorTask';
 import { registerRevealTaskInEditor } from './commands/revealTaskInEditor';
 import { registerToggleStatusAtCursor } from './commands/toggleStatusAtCursor';
+import { registerSetJiraApiToken } from './commands/setJiraApiToken';
+import { registerLinkJiraIssue } from './commands/linkJiraIssue';
+import { registerPushSummaryToJira } from './commands/pushSummaryToJira';
 
 function isFileNotFound(error: unknown): boolean {
   return error instanceof vscode.FileSystemError && error.code === 'FileNotFound';
@@ -112,6 +115,9 @@ export async function activate(
     registerReanchorTask(taskStore, treeProvider, codeLensProvider),
     registerRevealTaskInEditor(),
     registerToggleStatusAtCursor(taskStore, treeProvider, codeLensProvider),
+    registerSetJiraApiToken(context),
+    registerLinkJiraIssue(taskStore, context),
+    registerPushSummaryToJira(taskStore, context),
     // ログファイル保存のたびにツリーを再描画し、マーカーの手動編集・削除を
     // (キー入力毎ではなく保存単位で)アンカー未接続表示に反映する
     vscode.workspace.onDidSaveTextDocument(() => treeProvider.refresh()),

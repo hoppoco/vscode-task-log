@@ -162,6 +162,33 @@ export class TaskStore {
     return task;
   }
 
+  /** タスクをJiraチケットに紐づける(または`jiraIssueKey`に`null`を渡して解除する) */
+  async setJiraLink(
+    taskId: string,
+    link: { jiraIssueKey: string | null; includeInAncestorSummary: boolean },
+  ): Promise<Task> {
+    this.ensureLoaded();
+    const task = this.requireTask(taskId);
+    task.jiraIssueKey = link.jiraIssueKey;
+    task.includeInAncestorSummary = link.includeInAncestorSummary;
+    task.updatedAt = new Date().toISOString();
+    await this.persist();
+    return task;
+  }
+
+  /** taskId自身を含めて親方向に辿り、jiraIssueKeyを持つ最も近いタスクを返す */
+  findNearestJiraLinkedTask(taskId: string | null): Task | undefined {
+    this.ensureLoaded();
+    let current = taskId ? this.tasks.get(taskId) : undefined;
+    while (current) {
+      if (current.jiraIssueKey) {
+        return current;
+      }
+      current = current.parentTaskId ? this.tasks.get(current.parentTaskId) : undefined;
+    }
+    return undefined;
+  }
+
   private requireTask(taskId: string): Task {
     const task = this.tasks.get(taskId);
     if (!task) {

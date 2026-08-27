@@ -56,8 +56,35 @@
       {
         "command": "taskLog.toggleStatusAtCursor",
         "title": "Task Log: カーソル位置のタスクのステータスを切り替え"
+      },
+      {
+        "command": "taskLog.setJiraApiToken",
+        "title": "Task Log: Jira APIトークンを設定"
+      },
+      {
+        "command": "taskLog.linkJiraIssue",
+        "title": "Task Log: Jiraチケットに紐付け"
+      },
+      {
+        "command": "taskLog.pushSummaryToJira",
+        "title": "Task Log: 要約をJiraへ投稿"
       }
     ],
+    "configuration": {
+      "title": "Task Log",
+      "properties": {
+        "taskLog.jira.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "JiraインスタンスのベースURL(例: https://yourcompany.atlassian.net)"
+        },
+        "taskLog.jira.email": {
+          "type": "string",
+          "default": "",
+          "description": "Jiraアカウントのメールアドレス(APIトークンとのBasic認証に使用)"
+        }
+      }
+    },
     "views": {
       "explorer": [
         {

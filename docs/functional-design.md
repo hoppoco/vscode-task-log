@@ -11,8 +11,8 @@
 - **タスクツリービュー**:サイドバーにタスクの親子構造を表示する。項目のクリックでログの該当箇所を開き、ドラッグ&ドロップで親を変更できる。カーソル位置に対応する項目は自動的にハイライト(reveal)されるが、これは表示のみでフォーカスには影響しない
 - **ステータスバーコントローラ**:現在フォーカスしているタスクのパンくず(親子の連なり)を表示する
 - **停滞検知**:各タスクの最終更新日時を監視し、設定した閾値を超えたタスクをツリービュー上で視覚的に警告表示する
-- **要約生成**:選択したタスク(またはその配下のツリー)に紐づくログ内容から要約テキストを生成する
-- **Jira連携**:生成した要約を、タスクに紐づけられた既存のJiraチケットへコメントとして投稿する。Jira側にサブタスクやチケットを新規作成することはない
+- **要約生成**:指定タスクの配下のタスクツリーから、タイトルとステータスを階層構造が分かるインデント付きテキストとして組み立てる。ログ本文の抜粋やAIによる自然文要約は行わない(ロジックを単純に保ち、外部API依存を増やさないため)
+- **Jira連携**:生成した要約をエディタでプレビューし、確認・編集した上で、タスクに紐づけられた既存のJiraチケットへコメントとして投稿する。Jira側にサブタスクやチケットを新規作成することはない
 
 ## 2. システム構成図
 
@@ -80,8 +80,9 @@ erDiagram
 | StatusBarController | フォーカス中タスクのパンくず表示、フォーカス切り替え |
 | TaskCodeLensProvider | ログ編集中、マーカー範囲の直上に対応するタスク名をCodeLensとして表示し、クリックでそのタスクにフォーカスする。編集中は常にタスクツリーを見ているとは限らないため、エディタ側からもマーカーとタスクの対応が分かるようにする |
 | StallDetector | `updatedAt`を定期的に監視し、閾値超過タスクを検出してTreeViewへ反映 |
-| SummaryGenerator | 指定タスク配下のログ抜粋を収集し、要約テキストを組み立てる |
-| JiraClient | Jira REST APIを用いたコメント投稿、接続設定(URL・APIトークン・紐づけ対象チケット)の管理 |
+| SummaryGenerator | 指定タスク配下のタスクツリーから、タイトルとステータスの階層テキストを組み立てる(`buildSummary`)。`includeInAncestorSummary`が偽の部分木は除外する |
+| JiraClient | Jira REST APIを用いたチケット存在確認・サマリ取得・コメント投稿。`{ baseUrl, email, apiToken }`を値として受け取るのみで、設定の取得元(拡張設定・SecretStorage)は関知しない |
+| getJiraClient | 拡張設定(`taskLog.jira.baseUrl`・`taskLog.jira.email`)とSecretStorageのAPIトークンから`JiraClient`を組み立てる関数。呼ぶたびに現在の設定・トークンを読み直す。未設定時はエラーメッセージを表示する |
 
 ### 主なコマンド
 
@@ -98,8 +99,9 @@ erDiagram
 
 Jiraとの連携に関する操作:
 
-- `taskLog.linkJiraIssue`:選択中のタスクにJiraチケットキーを紐づける。入力されたキーはAPIで存在確認し、取得したサマリをタイトルの参考として表示する。既に祖先が別のJiraチケットに紐づいている場合は、この部分木を祖先の要約に「含める」か「含めない(独立)」かを併せて選択する(`includeInAncestorSummary`)
-- `taskLog.pushSummaryToJira`:要約を生成し、紐づくJiraチケットへコメント投稿
+- `taskLog.setJiraApiToken`:Jira APIトークンをパスワード入力で受け取り、SecretStorageに保存する。JiraインスタンスのURL・メールアドレスは拡張設定(`taskLog.jira.baseUrl`・`taskLog.jira.email`)で入力する
+- `taskLog.linkJiraIssue`:選択中のタスクにJiraチケットキーを紐づける。入力されたキーはAPIで存在確認し、取得したサマリをメッセージで表示する。既に祖先が別のJiraチケットに紐づいている場合は、この部分木を祖先の要約に「含める」か「含めない(独立)」かを併せて選択する(`includeInAncestorSummary`)
+- `taskLog.pushSummaryToJira`:対象タスクの自身または祖先から`jiraIssueKey`を解決し、その配下の要約を生成する。生成結果はUntitledドキュメントとして開いてプレビューし、確認・編集した上で、非モーダルな確認メッセージから投稿を実行する
 
 ## 5. ユースケース
 
@@ -115,6 +117,8 @@ graph LR
   U --> UC8[不要になったタスクを削除する]
   U --> UC9[ツリー項目からログの該当箇所を開く]
   U --> UC10[カーソル位置のタスクを素早く操作する]
+  U --> UC11[タスクをJiraチケットに紐づける]
+  U --> UC12[Jira接続を設定する]
 ```
 
 ## 6. 画面イメージ(ワイヤーフレーム)
@@ -161,7 +165,9 @@ graph LR
 
 ## 8. API設計(Jira連携)
 
-- 認証:Jira APIトークン(Basic認証)。設定はVSCodeのSecret Storageに保存し、平文でファイルに残さない
-- 使用エンドポイント:`POST /rest/api/3/issue/{issueIdOrKey}/comment`(要約コメントの投稿)
-- 事前検証:チケット紐づけ時に`GET /rest/api/3/issue/{issueIdOrKey}`でキーの存在を確認する
+- 認証:Jira APIトークンによるBasic認証(`email:apiToken`をBase64化)。APIトークン自体はVSCodeのSecretStorageに保存し、平文でファイルに残さない。JiraインスタンスのURL・メールアドレスは秘密情報ではないため、通常の拡張設定(`contributes.configuration`)で入力する
+- 使用エンドポイント:
+  - `GET /rest/api/3/issue/{issueIdOrKey}?fields=summary`(チケット紐づけ時の存在確認・サマリ取得)
+  - `POST /rest/api/3/issue/{issueIdOrKey}/comment`(要約コメントの投稿)
+- コメント本文の形式:Jira Cloud REST API v3はコメント本文にAtlassian Document Format(ADF、JSON形式のリッチテキスト表現)を要求する。本ツールは生成した要約テキスト全体を1つの`codeBlock`ノードとして送信する。これによりプレビューで見たインデント付きテキストが、そのままJira上にも表示される
 - 本ツールからJira側へチケット・サブタスクの新規作成は行わない(コメント投稿のみ)

@@ -68,6 +68,21 @@ async function withStubbedWarningMessage<T>(response: string, fn: () => Thenable
   }
 }
 
+async function withStubbedInformationMessage<T>(
+  response: string,
+  fn: () => Thenable<T>,
+): Promise<T> {
+  const original = vscode.window.showInformationMessage;
+  (
+    vscode.window as unknown as { showInformationMessage: () => Thenable<string> }
+  ).showInformationMessage = () => Promise.resolve(response);
+  try {
+    return await fn();
+  } finally {
+    vscode.window.showInformationMessage = original;
+  }
+}
+
 async function createTaskFromCurrentSelection(
   api: TaskLogExtensionApi,
   title: string,
@@ -94,6 +109,9 @@ suite('Task Log 結合テスト', () => {
       'taskLog.reanchorTask',
       'taskLog.revealTaskInEditor',
       'taskLog.toggleStatusAtCursor',
+      'taskLog.setJiraApiToken',
+      'taskLog.linkJiraIssue',
+      'taskLog.pushSummaryToJira',
     ]) {
       assert.ok(commands.includes(command), `${command} が登録されていません`);
     }
@@ -247,5 +265,43 @@ suite('Task Log 結合テスト', () => {
     );
 
     assert.strictEqual(api.taskStore.getById(task.id), undefined);
+  });
+
+  test('Jira未設定の状態でlinkJiraIssueを実行しても、クラッシュせず紐付けは行われない', async () => {
+    const api = await getApi();
+    const { editor } = await openLogDocument(
+      'jira-link-unconfigured.md',
+      ['line0', 'Jira紐付けテスト対象', 'line2'].join('\n'),
+    );
+    editor.selection = new vscode.Selection(1, 0, 1, 'Jira紐付けテスト対象'.length);
+    const task = await createTaskFromCurrentSelection(api, 'Jira紐付けテスト');
+
+    await withStubbedInputBox('PROJ-999', () =>
+      vscode.commands.executeCommand('taskLog.linkJiraIssue', task),
+    );
+
+    assert.strictEqual(api.taskStore.getById(task.id)?.jiraIssueKey, null);
+  });
+
+  test('Jira未設定の状態でpushSummaryToJiraを実行しても、クラッシュしない', async () => {
+    const api = await getApi();
+    const { editor } = await openLogDocument(
+      'jira-push-unconfigured.md',
+      ['line0', 'Jira投稿テスト対象', 'line2'].join('\n'),
+    );
+    editor.selection = new vscode.Selection(1, 0, 1, 'Jira投稿テスト対象'.length);
+    const task = await createTaskFromCurrentSelection(api, 'Jira投稿テスト');
+
+    // 紐付け済みの状態を直接作る(linkJiraIssueコマンド自体はここでは検証しない)
+    await api.taskStore.setJiraLink(task.id, {
+      jiraIssueKey: 'PROJ-1',
+      includeInAncestorSummary: false,
+    });
+
+    await withStubbedInformationMessage('投稿する', () =>
+      vscode.commands.executeCommand('taskLog.pushSummaryToJira', task),
+    );
+
+    // Jira未設定のため実際には投稿されないが、例外を投げずに完了することを確認する
   });
 });

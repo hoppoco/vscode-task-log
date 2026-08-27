@@ -153,4 +153,63 @@ describe('TaskStore', () => {
       expect(updated.anchorEndMarkerId).toBe('new-marker');
     });
   });
+
+  describe('setJiraLink', () => {
+    it('Jiraチケットキーとincludeフラグを設定する', async () => {
+      const task = await store.create(baseInput());
+
+      const updated = await store.setJiraLink(task.id, {
+        jiraIssueKey: 'PROJ-123',
+        includeInAncestorSummary: true,
+      });
+
+      expect(updated.jiraIssueKey).toBe('PROJ-123');
+      expect(updated.includeInAncestorSummary).toBe(true);
+    });
+
+    it('jiraIssueKeyにnullを渡すと紐付けを解除できる', async () => {
+      const task = await store.create(baseInput());
+      await store.setJiraLink(task.id, {
+        jiraIssueKey: 'PROJ-123',
+        includeInAncestorSummary: false,
+      });
+
+      const updated = await store.setJiraLink(task.id, {
+        jiraIssueKey: null,
+        includeInAncestorSummary: false,
+      });
+
+      expect(updated.jiraIssueKey).toBeNull();
+    });
+  });
+
+  describe('findNearestJiraLinkedTask', () => {
+    it('自身がjiraIssueKeyを持つ場合は自身を返す', async () => {
+      const task = await store.create(baseInput());
+      await store.setJiraLink(task.id, { jiraIssueKey: 'PROJ-1', includeInAncestorSummary: false });
+
+      expect(store.findNearestJiraLinkedTask(task.id)?.id).toBe(task.id);
+    });
+
+    it('自身に無ければ親方向に辿って見つける', async () => {
+      const grandparent = await store.create(baseInput({ title: '祖父' }));
+      await store.setJiraLink(grandparent.id, {
+        jiraIssueKey: 'PROJ-1',
+        includeInAncestorSummary: false,
+      });
+      const parent = await store.create(baseInput({ title: '親', parentTaskId: grandparent.id }));
+      const child = await store.create(baseInput({ title: '子', parentTaskId: parent.id }));
+
+      expect(store.findNearestJiraLinkedTask(child.id)?.id).toBe(grandparent.id);
+    });
+
+    it('誰も紐づいていない場合はundefinedを返す', async () => {
+      const task = await store.create(baseInput());
+      expect(store.findNearestJiraLinkedTask(task.id)).toBeUndefined();
+    });
+
+    it('nullを渡すとundefinedを返す', () => {
+      expect(store.findNearestJiraLinkedTask(null)).toBeUndefined();
+    });
+  });
 });
