@@ -18,8 +18,9 @@ export async function getJiraClient(
 
   if (!baseUrl || !email || !apiToken) {
     vscode.window.showErrorMessage(
-      'Jira接続設定が未完了です。設定でURL・メールアドレスを入力し、' +
-        '「Task Log: Jira APIトークンを設定」を実行してください。',
+      vscode.l10n.t(
+        'Jira connection is not configured yet. Enter the URL and email address in Settings, then run "Task Log: Set Jira API Token".',
+      ),
     );
     return undefined;
   }

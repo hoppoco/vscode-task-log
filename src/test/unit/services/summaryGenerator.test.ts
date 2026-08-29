@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSummary } from '../../../services/summaryGenerator';
+import { buildSummaryTree } from '../../../services/summaryGenerator';
 import type { Task } from '../../../models/task';
 
 function fakeTask(overrides: Partial<Task> = {}): Task {
@@ -19,17 +19,19 @@ function fakeTask(overrides: Partial<Task> = {}): Task {
   };
 }
 
-describe('buildSummary', () => {
-  it('親子孫の階層をインデント付きテキストで組み立てる', () => {
+describe('buildSummaryTree', () => {
+  it('親子孫の階層を構造化データとして組み立てる', () => {
     const root = fakeTask({ id: 'r', title: '親チケット', jiraIssueKey: 'PROJ-1' });
     const child = fakeTask({ id: 'a', parentTaskId: 'r', title: '子A', status: 'open' });
     const grandchild = fakeTask({ id: 'a1', parentTaskId: 'a', title: '孫A1', status: 'done' });
 
-    const result = buildSummary('r', [root, child, grandchild]);
+    const result = buildSummaryTree('r', [root, child, grandchild]);
 
-    expect(result).toBe(
-      ['- [未完了] 親チケット', '  - [未完了] 子A', '    - [完了] 孫A1'].join('\n'),
-    );
+    expect(result).toEqual([
+      { depth: 0, title: '親チケット', status: 'open' },
+      { depth: 1, title: '子A', status: 'open' },
+      { depth: 2, title: '孫A1', status: 'done' },
+    ]);
   });
 
   it('別チケットに紐づきincludeInAncestorSummaryが偽の部分木は除外する', () => {
@@ -43,9 +45,9 @@ describe('buildSummary', () => {
     });
     const excludedChild = fakeTask({ id: 'b1', parentTaskId: 'b', title: 'B配下' });
 
-    const result = buildSummary('r', [root, excluded, excludedChild]);
+    const result = buildSummaryTree('r', [root, excluded, excludedChild]);
 
-    expect(result).toBe('- [未完了] 親チケット');
+    expect(result).toEqual([{ depth: 0, title: '親チケット', status: 'open' }]);
   });
 
   it('別チケットに紐づきincludeInAncestorSummaryが真の部分木は含め、スコープを更新する', () => {
@@ -59,11 +61,13 @@ describe('buildSummary', () => {
     });
     const includedChild = fakeTask({ id: 'c1', parentTaskId: 'c', title: 'C配下' });
 
-    const result = buildSummary('r', [root, included, includedChild]);
+    const result = buildSummaryTree('r', [root, included, includedChild]);
 
-    expect(result).toBe(
-      ['- [未完了] 親チケット', '  - [未完了] 含めるC', '    - [未完了] C配下'].join('\n'),
-    );
+    expect(result).toEqual([
+      { depth: 0, title: '親チケット', status: 'open' },
+      { depth: 1, title: '含めるC', status: 'open' },
+      { depth: 2, title: 'C配下', status: 'open' },
+    ]);
   });
 
   it('内包された部分木のさらに内側にある独立部分木は、その時点の境界判定に従う', () => {
@@ -83,13 +87,16 @@ describe('buildSummary', () => {
       includeInAncestorSummary: false,
     });
 
-    const result = buildSummary('r', [root, included, deeplyExcluded]);
+    const result = buildSummaryTree('r', [root, included, deeplyExcluded]);
 
-    expect(result).toBe(['- [未完了] 親チケット', '  - [未完了] 含めるC'].join('\n'));
+    expect(result).toEqual([
+      { depth: 0, title: '親チケット', status: 'open' },
+      { depth: 1, title: '含めるC', status: 'open' },
+    ]);
   });
 
-  it('起点タスクが見つからない場合は空文字列を返す', () => {
-    const result = buildSummary('no-such-id', []);
-    expect(result).toBe('');
+  it('起点タスクが見つからない場合は空配列を返す', () => {
+    const result = buildSummaryTree('no-such-id', []);
+    expect(result).toEqual([]);
   });
 });

@@ -13,7 +13,7 @@ export function registerSetFocus(
     async (preselected?: Task) => {
       const target =
         preselected ??
-        (await pickTask(taskStore, { placeHolder: 'フォーカスするタスクを選択してください' }));
+        (await pickTask(taskStore, { placeHolder: vscode.l10n.t('Select the task to focus') }));
       if (!target) {
         return;
       }

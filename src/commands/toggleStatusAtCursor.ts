@@ -12,7 +12,7 @@ export function registerToggleStatusAtCursor(
   return vscode.commands.registerCommand('taskLog.toggleStatusAtCursor', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage('アクティブなエディタがありません');
+      vscode.window.showErrorMessage(vscode.l10n.t('No active editor.'));
       return;
     }
 
@@ -26,7 +26,9 @@ export function registerToggleStatusAtCursor(
       candidates,
     );
     if (!task) {
-      vscode.window.showInformationMessage('カーソル位置に対応するタスクが見つかりません');
+      vscode.window.showInformationMessage(
+        vscode.l10n.t('No task was found at the cursor position.'),
+      );
       return;
     }
 
@@ -36,7 +38,9 @@ export function registerToggleStatusAtCursor(
       treeProvider.refresh();
       codeLensProvider.refresh();
     } catch (error) {
-      vscode.window.showErrorMessage(`ステータスの変更に失敗しました: ${(error as Error).message}`);
+      vscode.window.showErrorMessage(
+        vscode.l10n.t('Failed to change the status: {0}', (error as Error).message),
+      );
     }
   });
 }

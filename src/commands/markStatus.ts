@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Task, TaskStatus } from '../models/task';
-import type { TaskStore } from '../services/taskStore';
+import { TaskNotFoundError, type TaskStore } from '../services/taskStore';
 import type { TaskCodeLensProvider } from '../views/taskCodeLensProvider';
 import type { TaskTreeViewProvider } from '../views/taskTreeViewProvider';
 import { pickTask } from './pickTask';
@@ -35,7 +35,8 @@ async function applyStatus(
   status: TaskStatus,
 ): Promise<void> {
   const target =
-    preselected ?? (await pickTask(taskStore, { placeHolder: '対象のタスクを選択してください' }));
+    preselected ??
+    (await pickTask(taskStore, { placeHolder: vscode.l10n.t('Select the target task') }));
   if (!target) {
     return;
   }
@@ -45,6 +46,14 @@ async function applyStatus(
     treeProvider.refresh();
     codeLensProvider.refresh();
   } catch (error) {
-    vscode.window.showErrorMessage(`ステータスの変更に失敗しました: ${(error as Error).message}`);
+    if (error instanceof TaskNotFoundError) {
+      vscode.window.showErrorMessage(
+        vscode.l10n.t('Failed to change the status: the task no longer exists.'),
+      );
+    } else {
+      vscode.window.showErrorMessage(
+        vscode.l10n.t('Failed to change the status: {0}', (error as Error).message),
+      );
+    }
   }
 }

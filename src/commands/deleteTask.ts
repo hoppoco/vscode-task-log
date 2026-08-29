@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Task } from '../models/task';
-import type { TaskStore } from '../services/taskStore';
+import { TaskNotFoundError, type TaskStore } from '../services/taskStore';
 import type { TaskCodeLensProvider } from '../views/taskCodeLensProvider';
 import type { TaskTreeViewProvider } from '../views/taskTreeViewProvider';
 import { pickTask } from './pickTask';
@@ -13,7 +13,7 @@ export function registerDeleteTask(
   return vscode.commands.registerCommand('taskLog.deleteTask', async (preselected?: Task) => {
     const target =
       preselected ??
-      (await pickTask(taskStore, { placeHolder: '削除するタスクを選択してください' }));
+      (await pickTask(taskStore, { placeHolder: vscode.l10n.t('Select the task to delete') }));
     if (!target) {
       return;
     }
@@ -23,10 +23,21 @@ export function registerDeleteTask(
     if (descendantCount > 0) {
       const choice = await vscode.window.showQuickPick(
         [
-          { label: '子タスクを昇格させる(このタスクの親の下に移動)', cascade: false },
-          { label: `子タスクも含めて${descendantCount}件すべて削除する`, cascade: true },
+          {
+            label: vscode.l10n.t("Promote child tasks (move under this task's parent)"),
+            cascade: false,
+          },
+          {
+            label: vscode.l10n.t('Delete all {0} child task(s) too', descendantCount),
+            cascade: true,
+          },
         ],
-        { placeHolder: `「${target.title}」には子タスクがあります。どうしますか?` },
+        {
+          placeHolder: vscode.l10n.t(
+            '"{0}" has child tasks. What would you like to do?',
+            target.title,
+          ),
+        },
       );
       if (!choice) {
         return;
@@ -35,14 +46,22 @@ export function registerDeleteTask(
     }
 
     const confirmMessage = cascade
-      ? `「${target.title}」と子タスク${descendantCount}件を削除します。ログ本文(マーカーを含む)は変更されません。`
-      : `「${target.title}」を削除します。ログ本文(マーカーを含む)は変更されません。`;
+      ? vscode.l10n.t(
+          'This will delete "{0}" and {1} child task(s). The log text (including markers) will not be changed.',
+          target.title,
+          descendantCount,
+        )
+      : vscode.l10n.t(
+          'This will delete "{0}". The log text (including markers) will not be changed.',
+          target.title,
+        );
+    const deleteLabel = vscode.l10n.t('Delete');
     const confirmed = await vscode.window.showWarningMessage(
       confirmMessage,
       { modal: true },
-      '削除',
+      deleteLabel,
     );
-    if (confirmed !== '削除') {
+    if (confirmed !== deleteLabel) {
       return;
     }
 
@@ -51,7 +70,15 @@ export function registerDeleteTask(
       treeProvider.refresh();
       codeLensProvider.refresh();
     } catch (error) {
-      vscode.window.showErrorMessage(`タスクの削除に失敗しました: ${(error as Error).message}`);
+      if (error instanceof TaskNotFoundError) {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to delete the task: the task no longer exists.'),
+        );
+      } else {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to delete the task: {0}', (error as Error).message),
+        );
+      }
     }
   });
 }

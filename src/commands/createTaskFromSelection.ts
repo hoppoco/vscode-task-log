@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { findInnermostContainingTask } from '../services/taskLocator';
-import type { TaskStore } from '../services/taskStore';
+import { ParentTaskNotFoundError, type TaskStore } from '../services/taskStore';
 import type { StatusBarController } from '../views/statusBarController';
 import type { TaskCodeLensProvider } from '../views/taskCodeLensProvider';
 import type { TaskTreeViewProvider } from '../views/taskTreeViewProvider';
@@ -15,19 +15,20 @@ export function registerCreateTaskFromSelection(
   return vscode.commands.registerCommand('taskLog.createTaskFromSelection', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage('アクティブなエディタがありません');
+      vscode.window.showErrorMessage(vscode.l10n.t('No active editor.'));
       return;
     }
 
     const lineRange = selectionToLineRange(editor);
 
     const selectedText = editor.document.getText(editor.selection);
-    const suggestedTitle = selectedText.trim().split('\n')[0]?.slice(0, 40) || '無題のタスク';
+    const suggestedTitle =
+      selectedText.trim().split('\n')[0]?.slice(0, 40) || vscode.l10n.t('Untitled Task');
 
     // ドキュメントを変更する前にタイトルを確定する。キャンセル時にマーカーだけが
     // 挿入されてタスクが存在しない、という不整合を避けるため。
     const title = await vscode.window.showInputBox({
-      prompt: 'タスクのタイトル',
+      prompt: vscode.l10n.t('Task title'),
       value: suggestedTitle,
     });
     if (title === undefined) {
@@ -65,7 +66,15 @@ export function registerCreateTaskFromSelection(
       codeLensProvider.refresh();
       statusBar.setFocus(task.id);
     } catch (error) {
-      vscode.window.showErrorMessage(`タスクの作成に失敗しました: ${(error as Error).message}`);
+      if (error instanceof ParentTaskNotFoundError) {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to create the task: the parent task no longer exists.'),
+        );
+      } else {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to create the task: {0}', (error as Error).message),
+        );
+      }
     }
   });
 }

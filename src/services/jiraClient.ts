@@ -9,6 +9,31 @@ export interface JiraIssueSummary {
   summary: string;
 }
 
+/**
+ * これらの例外のmessageは、ログ・デバッグ用の素の英語文であり、ユーザーへの表示用文言では
+ * ない。呼び出し元(commands層)がinstanceofで種類を判定し、vscode.l10n.t()で
+ * 表示用のメッセージを組み立てる。
+ */
+export class JiraIssueFetchError extends Error {
+  constructor(
+    public readonly issueKey: string,
+    public readonly status: number,
+  ) {
+    super(`Failed to fetch Jira issue ${issueKey} (status ${status})`);
+    this.name = 'JiraIssueFetchError';
+  }
+}
+
+export class JiraCommentPostError extends Error {
+  constructor(
+    public readonly issueKey: string,
+    public readonly status: number,
+  ) {
+    super(`Failed to post comment to Jira issue ${issueKey} (status ${status})`);
+    this.name = 'JiraCommentPostError';
+  }
+}
+
 /** Atlassian Document Format(ADF)の最小構成。全文を1つのコードブロックとして包む */
 function toAdfCodeBlock(text: string): unknown {
   return {
@@ -36,7 +61,7 @@ export class JiraClient {
       { headers: this.authHeaders() },
     );
     if (!response.ok) {
-      throw new Error(`Jiraチケットの取得に失敗しました(${response.status}): ${issueKey}`);
+      throw new JiraIssueFetchError(issueKey, response.status);
     }
 
     const body = (await response.json()) as { key: string; fields: { summary: string } };
@@ -53,7 +78,7 @@ export class JiraClient {
       },
     );
     if (!response.ok) {
-      throw new Error(`Jiraへのコメント投稿に失敗しました(${response.status}): ${issueKey}`);
+      throw new JiraCommentPostError(issueKey, response.status);
     }
   }
 

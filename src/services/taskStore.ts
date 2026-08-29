@@ -24,6 +24,32 @@ export interface Anchor {
   anchorEndMarkerId: string;
 }
 
+/**
+ * これらの例外のmessageは、ログ・デバッグ用の素の英語文であり、ユーザーへの表示用文言では
+ * ない。呼び出し元(commands層)がinstanceofで種類を判定し、vscode.l10n.t()で
+ * 表示用のメッセージを組み立てる。
+ */
+export class ParentTaskNotFoundError extends Error {
+  constructor(public readonly parentTaskId: string) {
+    super(`Parent task not found: ${parentTaskId}`);
+    this.name = 'ParentTaskNotFoundError';
+  }
+}
+
+export class TaskNotFoundError extends Error {
+  constructor(public readonly taskId: string) {
+    super(`Task not found: ${taskId}`);
+    this.name = 'TaskNotFoundError';
+  }
+}
+
+export class CannotMoveUnderOwnDescendantError extends Error {
+  constructor(public readonly taskId: string) {
+    super('Cannot move a task under its own descendant');
+    this.name = 'CannotMoveUnderOwnDescendantError';
+  }
+}
+
 export class TaskStore {
   private tasks = new Map<string, Task>();
   private loaded = false;
@@ -60,7 +86,7 @@ export class TaskStore {
   async create(input: CreateTaskInput): Promise<Task> {
     this.ensureLoaded();
     if (input.parentTaskId && !this.tasks.has(input.parentTaskId)) {
-      throw new Error(`親タスクが見つかりません: ${input.parentTaskId}`);
+      throw new ParentTaskNotFoundError(input.parentTaskId);
     }
 
     const now = new Date().toISOString();
@@ -89,7 +115,7 @@ export class TaskStore {
     if (newParentTaskId) {
       this.requireTask(newParentTaskId);
       if (this.isDescendantOf(newParentTaskId, taskId)) {
-        throw new Error('タスクを自分自身の子孫の下に移動することはできません');
+        throw new CannotMoveUnderOwnDescendantError(taskId);
       }
     }
 
@@ -192,7 +218,7 @@ export class TaskStore {
   private requireTask(taskId: string): Task {
     const task = this.tasks.get(taskId);
     if (!task) {
-      throw new Error(`タスクが見つかりません: ${taskId}`);
+      throw new TaskNotFoundError(taskId);
     }
     return task;
   }
@@ -211,7 +237,9 @@ export class TaskStore {
 
   private ensureLoaded(): void {
     if (!this.loaded) {
-      throw new Error('TaskStore.load()が呼ばれる前にアクセスされました');
+      // プログラマのミス(load()の呼び忘れ)を示すアサーション。通常の利用では
+      // 発生しない経路のため、l10n対応の対象外とする(design.md参照)。
+      throw new Error('TaskStore.load() was not called before this method was used');
     }
   }
 

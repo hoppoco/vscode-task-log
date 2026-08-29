@@ -241,8 +241,9 @@ suite('Task Log 結合テスト', () => {
     const newRangeLine = document.getText().split('\n').indexOf('新しい範囲');
     editor.selection = new vscode.Selection(newRangeLine, 0, newRangeLine, '新しい範囲'.length);
 
-    // このタスクは既に接続済みのため、張り替え確認ダイアログが出る。テストでは自動承認する
-    await withStubbedWarningMessage('張り替える', () =>
+    // このタスクは既に接続済みのため、張り替え確認ダイアログが出る。テストでは自動承認する。
+    // ボタンラベルはvscode.l10n.t()経由(テスト環境では既定の英語文字列にフォールバックする)
+    await withStubbedWarningMessage('Reanchor', () =>
       vscode.commands.executeCommand('taskLog.reanchorTask', task),
     );
 
@@ -260,7 +261,8 @@ suite('Task Log 結合テスト', () => {
     editor.selection = new vscode.Selection(1, 0, 1, '削除対象'.length);
     const task = await createTaskFromCurrentSelection(api, '削除テスト');
 
-    await withStubbedWarningMessage('削除', () =>
+    // ボタンラベルはvscode.l10n.t()経由(テスト環境では既定の英語文字列にフォールバックする)
+    await withStubbedWarningMessage('Delete', () =>
       vscode.commands.executeCommand('taskLog.deleteTask', task),
     );
 
@@ -298,7 +300,8 @@ suite('Task Log 結合テスト', () => {
       includeInAncestorSummary: false,
     });
 
-    await withStubbedInformationMessage('投稿する', () =>
+    // ボタンラベルはvscode.l10n.t()経由(テスト環境では既定の英語文字列にフォールバックする)
+    await withStubbedInformationMessage('Post', () =>
       vscode.commands.executeCommand('taskLog.pushSummaryToJira', task),
     );
 

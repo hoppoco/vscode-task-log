@@ -40,7 +40,7 @@ export async function applyMarkerInsertion(
     editBuilder.replace(fullRange, inserted.text);
   });
   if (!applied) {
-    vscode.window.showErrorMessage('ログへのマーカー挿入に失敗しました');
+    vscode.window.showErrorMessage(vscode.l10n.t('Failed to insert the marker into the log.'));
     return undefined;
   }
 

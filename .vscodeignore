@@ -17,3 +17,4 @@ node_modules/**
 .gitignore
 CLAUDE.md
 *.vsix
+l10n/bundle.l10n.json

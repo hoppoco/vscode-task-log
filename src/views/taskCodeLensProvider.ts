@@ -27,10 +27,10 @@ export class TaskCodeLensProvider implements vscode.CodeLensProvider {
       }
 
       const range = new vscode.Range(resolved.startLine, 0, resolved.startLine, 0);
-      const statusLabel = task.status === 'done' ? ' (完了)' : '';
+      const statusLabel = task.status === 'done' ? ` (${vscode.l10n.t('Done')})` : '';
       lenses.push(
         new vscode.CodeLens(range, {
-          title: `$(circle-outline) タスク: ${task.title}${statusLabel}`,
+          title: `$(circle-outline) ${vscode.l10n.t('Task: {0}', task.title)}${statusLabel}`,
           command: 'taskLog.setFocus',
           arguments: [task],
         }),

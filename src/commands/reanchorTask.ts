@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Task } from '../models/task';
-import type { TaskStore } from '../services/taskStore';
+import { TaskNotFoundError, type TaskStore } from '../services/taskStore';
 import type { TaskCodeLensProvider } from '../views/taskCodeLensProvider';
 import type { TaskTreeViewProvider } from '../views/taskTreeViewProvider';
 import { applyMarkerInsertion, selectionToLineRange } from './markerEditing';
@@ -20,19 +20,23 @@ export function registerReanchorTask(
     // pickUnanchoredTaskを経由しない呼び出し(例:将来のツリー右クリックメニュー等)に備え、
     // 既に接続済みのタスクが渡された場合は張り替える前に確認する
     if (await treeProvider.isAnchorConnected(target)) {
+      const reanchorLabel = vscode.l10n.t('Reanchor');
       const proceed = await vscode.window.showWarningMessage(
-        `「${target.title}」は既にアンカーが接続されています。新しい範囲に張り替えますか?(元の範囲への参照は失われます)`,
+        vscode.l10n.t(
+          '"{0}" is already anchored. Reanchor it to the new range? (The reference to the original range will be lost.)',
+          target.title,
+        ),
         { modal: true },
-        '張り替える',
+        reanchorLabel,
       );
-      if (proceed !== '張り替える') {
+      if (proceed !== reanchorLabel) {
         return;
       }
     }
 
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage('アクティブなエディタがありません');
+      vscode.window.showErrorMessage(vscode.l10n.t('No active editor.'));
       return;
     }
 
@@ -52,7 +56,15 @@ export function registerReanchorTask(
       treeProvider.refresh();
       codeLensProvider.refresh();
     } catch (error) {
-      vscode.window.showErrorMessage(`アンカーの再設定に失敗しました: ${(error as Error).message}`);
+      if (error instanceof TaskNotFoundError) {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to reanchor the task: the task no longer exists.'),
+        );
+      } else {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to reanchor the task: {0}', (error as Error).message),
+        );
+      }
     }
   });
 }
@@ -70,12 +82,12 @@ async function pickUnanchoredTask(
   );
 
   if (unanchoredIds.size === 0) {
-    vscode.window.showInformationMessage('アンカー未接続のタスクはありません');
+    vscode.window.showInformationMessage(vscode.l10n.t('There are no unanchored tasks.'));
     return undefined;
   }
 
   return pickTask(taskStore, {
-    placeHolder: 'アンカーを再設定するタスクを選択してください',
+    placeHolder: vscode.l10n.t('Select the task to reanchor'),
     filter: (task) => unanchoredIds.has(task.id),
   });
 }

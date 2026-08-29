@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { Task } from '../models/task';
-import type { TaskStore } from '../services/taskStore';
+import { JiraIssueFetchError } from '../services/jiraClient';
+import { TaskNotFoundError, type TaskStore } from '../services/taskStore';
 import { getJiraClient } from './getJiraClient';
 import { pickTask } from './pickTask';
 
@@ -11,13 +12,13 @@ export function registerLinkJiraIssue(
   return vscode.commands.registerCommand('taskLog.linkJiraIssue', async (preselected?: Task) => {
     const target =
       preselected ??
-      (await pickTask(taskStore, { placeHolder: '紐づけるタスクを選択してください' }));
+      (await pickTask(taskStore, { placeHolder: vscode.l10n.t('Select the task to link') }));
     if (!target) {
       return;
     }
 
     const issueKey = await vscode.window.showInputBox({
-      prompt: 'Jiraチケットキーを入力してください(例: PROJ-123)',
+      prompt: vscode.l10n.t('Enter the Jira issue key (e.g. PROJ-123)'),
     });
     if (!issueKey) {
       return;
@@ -32,20 +33,35 @@ export function registerLinkJiraIssue(
     try {
       issue = await client.getIssueSummary(issueKey);
     } catch (error) {
-      vscode.window.showErrorMessage(`チケットの確認に失敗しました: ${(error as Error).message}`);
+      if (error instanceof JiraIssueFetchError) {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to verify the issue (status {0}).', error.status),
+        );
+      } else {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to verify the issue: {0}', (error as Error).message),
+        );
+      }
       return;
     }
 
     let includeInAncestorSummary = false;
     const ancestorLink = taskStore.findNearestJiraLinkedTask(target.parentTaskId);
-    if (ancestorLink && ancestorLink.jiraIssueKey !== issue.key) {
+    const ancestorJiraIssueKey = ancestorLink?.jiraIssueKey;
+    if (ancestorJiraIssueKey && ancestorJiraIssueKey !== issue.key) {
       const choice = await vscode.window.showQuickPick(
         [
-          { label: '独立させる(祖先の要約には含めない)', include: false },
-          { label: '祖先の要約にも含める', include: true },
+          {
+            label: vscode.l10n.t('Keep it independent (exclude from the ancestor summary)'),
+            include: false,
+          },
+          { label: vscode.l10n.t('Include it in the ancestor summary'), include: true },
         ],
         {
-          placeHolder: `祖先が既に${ancestorLink.jiraIssueKey}に紐づいています。この部分木の扱いは?`,
+          placeHolder: vscode.l10n.t(
+            'An ancestor is already linked to {0}. How should this subtree be treated?',
+            ancestorJiraIssueKey,
+          ),
         },
       );
       if (!choice) {
@@ -54,7 +70,21 @@ export function registerLinkJiraIssue(
       includeInAncestorSummary = choice.include;
     }
 
-    await taskStore.setJiraLink(target.id, { jiraIssueKey: issue.key, includeInAncestorSummary });
-    vscode.window.showInformationMessage(`「${issue.key}: ${issue.summary}」に紐付けました`);
+    try {
+      await taskStore.setJiraLink(target.id, { jiraIssueKey: issue.key, includeInAncestorSummary });
+      vscode.window.showInformationMessage(
+        vscode.l10n.t('Linked to "{0}: {1}".', issue.key, issue.summary),
+      );
+    } catch (error) {
+      if (error instanceof TaskNotFoundError) {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to link the task: the task no longer exists.'),
+        );
+      } else {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to link the task: {0}', (error as Error).message),
+        );
+      }
+    }
   });
 }

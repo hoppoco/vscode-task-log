@@ -1,7 +1,7 @@
 {
   "name": "tasklog",
   "displayName": "Task Log",
-  "description": "枝分かれする調査ログを、書式を制約せずに記録しながら、必要な範囲だけを軽量にタスク化するための個人用VSCode拡張",
+  "description": "%extension.description%",
   "version": "0.0.1",
   "publisher": "local",
   "private": true,
@@ -14,61 +14,62 @@
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "contributes": {
     "commands": [
       {
         "command": "taskLog.createTaskFromSelection",
-        "title": "Task Log: 選択範囲からタスクを作成"
+        "title": "%taskLog.createTaskFromSelection.title%"
       },
       {
         "command": "taskLog.setParent",
-        "title": "Task Log: 親タスクを設定"
+        "title": "%taskLog.setParent.title%"
       },
       {
         "command": "taskLog.setFocus",
-        "title": "Task Log: タスクにフォーカス"
+        "title": "%taskLog.setFocus.title%"
       },
       {
         "command": "taskLog.clearFocus",
-        "title": "Task Log: フォーカスを解除"
+        "title": "%taskLog.clearFocus.title%"
       },
       {
         "command": "taskLog.markDone",
-        "title": "Task Log: タスクを完了にする",
+        "title": "%taskLog.markDone.title%",
         "icon": "$(circle-outline)"
       },
       {
         "command": "taskLog.markOpen",
-        "title": "Task Log: タスクを未完了に戻す",
+        "title": "%taskLog.markOpen.title%",
         "icon": "$(pass)"
       },
       {
         "command": "taskLog.deleteTask",
-        "title": "Task Log: タスクを削除"
+        "title": "%taskLog.deleteTask.title%"
       },
       {
         "command": "taskLog.reanchorTask",
-        "title": "Task Log: アンカーを再設定"
+        "title": "%taskLog.reanchorTask.title%"
       },
       {
         "command": "taskLog.revealTaskInEditor",
-        "title": "Task Log: ログの該当箇所を開く"
+        "title": "%taskLog.revealTaskInEditor.title%"
       },
       {
         "command": "taskLog.toggleStatusAtCursor",
-        "title": "Task Log: カーソル位置のタスクのステータスを切り替え"
+        "title": "%taskLog.toggleStatusAtCursor.title%"
       },
       {
         "command": "taskLog.setJiraApiToken",
-        "title": "Task Log: Jira APIトークンを設定"
+        "title": "%taskLog.setJiraApiToken.title%"
       },
       {
         "command": "taskLog.linkJiraIssue",
-        "title": "Task Log: Jiraチケットに紐付け"
+        "title": "%taskLog.linkJiraIssue.title%"
       },
       {
         "command": "taskLog.pushSummaryToJira",
-        "title": "Task Log: 要約をJiraへ投稿"
+        "title": "%taskLog.pushSummaryToJira.title%"
       }
     ],
     "configuration": {
@@ -77,12 +78,12 @@
         "taskLog.jira.baseUrl": {
           "type": "string",
           "default": "",
-          "description": "JiraインスタンスのベースURL(例: https://yourcompany.atlassian.net)"
+          "description": "%taskLog.jira.baseUrl.description%"
         },
         "taskLog.jira.email": {
           "type": "string",
           "default": "",
-          "description": "Jiraアカウントのメールアドレス(APIトークンとのBasic認証に使用)"
+          "description": "%taskLog.jira.email.description%"
         }
       }
     },
@@ -90,7 +91,7 @@
       "explorer": [
         {
           "id": "taskLog.tree",
-          "name": "Task Tree"
+          "name": "%taskLog.tree.name%"
         }
       ]
     },
@@ -118,12 +119,14 @@
     "test:integration": "node ./out/test/integration/runTest.js",
     "pretest:integration": "tsc -p . --outDir out",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "l10n:export": "npx @vscode/l10n-dev export --outDir ./l10n ./src"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/l10n-dev": "^0.0.35",
     "@vscode/test-electron": "^2.3.9",
     "esbuild": "^0.20.2",
     "eslint": "^9.1.0",

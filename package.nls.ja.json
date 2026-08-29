@@ -1,0 +1,19 @@
+{
+  "extension.description": "枝分かれする調査ログを、書式を制約せずに記録しながら、必要な範囲だけを軽量にタスク化するための個人用VSCode拡張",
+  "taskLog.createTaskFromSelection.title": "Task Log: 選択範囲からタスクを作成",
+  "taskLog.setParent.title": "Task Log: 親タスクを設定",
+  "taskLog.setFocus.title": "Task Log: タスクにフォーカス",
+  "taskLog.clearFocus.title": "Task Log: フォーカスを解除",
+  "taskLog.markDone.title": "Task Log: タスクを完了にする",
+  "taskLog.markOpen.title": "Task Log: タスクを未完了に戻す",
+  "taskLog.deleteTask.title": "Task Log: タスクを削除",
+  "taskLog.reanchorTask.title": "Task Log: アンカーを再設定",
+  "taskLog.revealTaskInEditor.title": "Task Log: ログの該当箇所を開く",
+  "taskLog.toggleStatusAtCursor.title": "Task Log: カーソル位置のタスクのステータスを切り替え",
+  "taskLog.setJiraApiToken.title": "Task Log: Jira APIトークンを設定",
+  "taskLog.linkJiraIssue.title": "Task Log: Jiraチケットに紐付け",
+  "taskLog.pushSummaryToJira.title": "Task Log: 要約をJiraへ投稿",
+  "taskLog.jira.baseUrl.description": "JiraインスタンスのベースURL(例: https://yourcompany.atlassian.net)",
+  "taskLog.jira.email.description": "Jiraアカウントのメールアドレス(APIトークンとのBasic認証に使用)",
+  "taskLog.tree.name": "タスクツリー"
+}

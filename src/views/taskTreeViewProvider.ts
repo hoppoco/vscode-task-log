@@ -25,7 +25,7 @@ export class TaskTreeItem extends vscode.TreeItem {
     this.description = this.buildDescription(task);
     this.command = {
       command: 'taskLog.revealTaskInEditor',
-      title: 'ログの該当箇所を開く',
+      title: vscode.l10n.t('Reveal task in editor'),
       arguments: [task],
     };
     if (!isAnchorConnected) {
@@ -33,7 +33,7 @@ export class TaskTreeItem extends vscode.TreeItem {
         'warning',
         new vscode.ThemeColor('problemsWarningIcon.foreground'),
       );
-      this.tooltip = 'アンカー未接続:参照元のログにマーカーが見つかりません';
+      this.tooltip = vscode.l10n.t('Unanchored: the marker could not be found in the log.');
     } else if (task.status === 'done') {
       this.iconPath = new vscode.ThemeIcon('pass');
     } else {
@@ -43,7 +43,7 @@ export class TaskTreeItem extends vscode.TreeItem {
 
   private buildDescription(task: Task): string {
     const fileName = path.basename(task.logFilePath);
-    return task.status === 'done' ? `完了 · ${fileName}` : fileName;
+    return task.status === 'done' ? `${vscode.l10n.t('Done')} · ${fileName}` : fileName;
   }
 }
 

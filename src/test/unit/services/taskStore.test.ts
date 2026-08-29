@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { TaskStore, type TaskStorage } from '../../../services/taskStore';
+import {
+  CannotMoveUnderOwnDescendantError,
+  ParentTaskNotFoundError,
+  TaskNotFoundError,
+  TaskStore,
+  type TaskStorage,
+} from '../../../services/taskStore';
 
 function createInMemoryStorage(): TaskStorage {
   let content: string | undefined;
@@ -45,7 +51,9 @@ describe('TaskStore', () => {
   });
 
   it('存在しない親タスクを指定すると例外を投げる', async () => {
-    await expect(store.create(baseInput({ parentTaskId: 'no-such-id' }))).rejects.toThrow();
+    await expect(store.create(baseInput({ parentTaskId: 'no-such-id' }))).rejects.toThrow(
+      ParentTaskNotFoundError,
+    );
   });
 
   it('親子関係を取得できる', async () => {
@@ -71,7 +79,9 @@ describe('TaskStore', () => {
     const parent = await store.create(baseInput({ title: '親', parentTaskId: grandparent.id }));
     const child = await store.create(baseInput({ title: '子', parentTaskId: parent.id }));
 
-    await expect(store.setParent(grandparent.id, child.id)).rejects.toThrow();
+    await expect(store.setParent(grandparent.id, child.id)).rejects.toThrow(
+      CannotMoveUnderOwnDescendantError,
+    );
   });
 
   it('ステータスを変更できる', async () => {
@@ -134,7 +144,9 @@ describe('TaskStore', () => {
     });
 
     it('存在しないタスクを削除しようとすると例外を投げる', async () => {
-      await expect(store.delete('no-such-id', { cascade: false })).rejects.toThrow();
+      await expect(store.delete('no-such-id', { cascade: false })).rejects.toThrow(
+        TaskNotFoundError,
+      );
     });
   });
 

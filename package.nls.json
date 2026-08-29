@@ -1,0 +1,19 @@
+{
+  "extension.description": "A personal VSCode extension for recording free-form investigation logs and turning parts of them into lightweight, reference-style tasks, without touching your existing formatting.",
+  "taskLog.createTaskFromSelection.title": "Task Log: Create Task from Selection",
+  "taskLog.setParent.title": "Task Log: Set Parent Task",
+  "taskLog.setFocus.title": "Task Log: Focus Task",
+  "taskLog.clearFocus.title": "Task Log: Clear Focus",
+  "taskLog.markDone.title": "Task Log: Mark Task Done",
+  "taskLog.markOpen.title": "Task Log: Mark Task Open",
+  "taskLog.deleteTask.title": "Task Log: Delete Task",
+  "taskLog.reanchorTask.title": "Task Log: Reanchor Task",
+  "taskLog.revealTaskInEditor.title": "Task Log: Reveal Task in Editor",
+  "taskLog.toggleStatusAtCursor.title": "Task Log: Toggle Status of Task at Cursor",
+  "taskLog.setJiraApiToken.title": "Task Log: Set Jira API Token",
+  "taskLog.linkJiraIssue.title": "Task Log: Link to Jira Issue",
+  "taskLog.pushSummaryToJira.title": "Task Log: Push Summary to Jira",
+  "taskLog.jira.baseUrl.description": "Base URL of your Jira instance (e.g. https://yourcompany.atlassian.net)",
+  "taskLog.jira.email.description": "Email address of your Jira account (used for Basic auth together with the API token)",
+  "taskLog.tree.name": "Task Tree"
+}

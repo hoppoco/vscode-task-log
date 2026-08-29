@@ -18,6 +18,9 @@
 │       └── integration/ # @vscode/test-electronによる結合テスト
 ├── esbuild.js / package.json / tsconfig.json / eslint.config.js / .prettierrc
 │                        # ビルド・Lint・型チェックの設定一式
+├── package.nls.json / package.nls.ja.json
+│                        # package.json内文字列の英語・日本語訳
+├── l10n/                # コード中のvscode.l10n.t()呼び出しに対応する翻訳(bundle.l10n.ja.json等)
 └── .vscodeignore        # .vsix化時の除外設定
 ```
 

@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { JiraClient } from '../../../services/jiraClient';
+import {
+  JiraClient,
+  JiraCommentPostError,
+  JiraIssueFetchError,
+} from '../../../services/jiraClient';
 
 function mockFetchResponse(ok: boolean, status: number, json: unknown): Response {
   return { ok, status, json: async () => json } as Response;
@@ -48,7 +52,7 @@ describe('JiraClient', () => {
       getFetchMock().mockResolvedValue(mockFetchResponse(false, 404, {}));
 
       const client = new JiraClient(config);
-      await expect(client.getIssueSummary('NOPE-1')).rejects.toThrow();
+      await expect(client.getIssueSummary('NOPE-1')).rejects.toThrow(JiraIssueFetchError);
     });
   });
 
@@ -73,7 +77,7 @@ describe('JiraClient', () => {
       getFetchMock().mockResolvedValue(mockFetchResponse(false, 500, {}));
 
       const client = new JiraClient(config);
-      await expect(client.postComment('PROJ-123', 'text')).rejects.toThrow();
+      await expect(client.postComment('PROJ-123', 'text')).rejects.toThrow(JiraCommentPostError);
     });
   });
 });

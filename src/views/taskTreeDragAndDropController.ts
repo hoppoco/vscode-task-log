@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 import type { Task } from '../models/task';
-import type { TaskStore } from '../services/taskStore';
+import {
+  CannotMoveUnderOwnDescendantError,
+  TaskNotFoundError,
+  type TaskStore,
+} from '../services/taskStore';
 
 const TASK_MIME_TYPE = 'application/vnd.code.tree.tasklog-tree';
 
@@ -36,7 +40,21 @@ export class TaskTreeDragAndDropController implements vscode.TreeDragAndDropCont
       await this.taskStore.setParent(draggedId, target ? target.id : null);
       this.onChanged();
     } catch (error) {
-      vscode.window.showErrorMessage(`親タスクの変更に失敗しました: ${(error as Error).message}`);
+      if (error instanceof CannotMoveUnderOwnDescendantError) {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t(
+            'Failed to change the parent: cannot move a task under its own descendant.',
+          ),
+        );
+      } else if (error instanceof TaskNotFoundError) {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to change the parent: the task no longer exists.'),
+        );
+      } else {
+        vscode.window.showErrorMessage(
+          vscode.l10n.t('Failed to change the parent: {0}', (error as Error).message),
+        );
+      }
     }
   }
 }

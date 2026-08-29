@@ -19,7 +19,9 @@ export function registerRevealTaskInEditor(): vscode.Disposable {
       );
       if (!resolved) {
         vscode.window.showWarningMessage(
-          'アンカー未接続のため、該当箇所を特定できません。アンカーの再設定を検討してください。',
+          vscode.l10n.t(
+            'Cannot locate this task because it is unanchored. Consider reanchoring it.',
+          ),
         );
         return;
       }
@@ -31,7 +33,9 @@ export function registerRevealTaskInEditor(): vscode.Disposable {
         vscode.TextEditorRevealType.InCenter,
       );
     } catch (error) {
-      vscode.window.showErrorMessage(`ログを開けませんでした: ${(error as Error).message}`);
+      vscode.window.showErrorMessage(
+        vscode.l10n.t('Could not open the log: {0}', (error as Error).message),
+      );
     }
   });
 }
