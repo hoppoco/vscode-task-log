@@ -1,0 +1,54 @@
+name: Release
+
+# vX.Y.Z 形式のタグがpushされたときにのみ実行する。
+# バージョン番号の決定・package.jsonの更新・タグ付けはローカルで行い、
+# 型チェック・Lint・テスト・.vsixビルド・GitHub Release作成はここで自動化する。
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Compile for integration tests
+        run: npm run pretest:integration
+
+      - name: Integration tests
+        run: xvfb-run -a npm run test:integration
+
+      - name: Package extension (.vsix)
+        run: npx @vscode/vsce package --no-dependencies
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" ./*.vsix \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
