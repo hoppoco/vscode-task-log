@@ -36,6 +36,9 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
 
+      - name: Bundle extension (dist/extension.js)
+        run: npm run compile
+
       - name: Compile for integration tests
         run: npm run pretest:integration
 
