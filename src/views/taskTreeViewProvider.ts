@@ -43,7 +43,15 @@ export class TaskTreeItem extends vscode.TreeItem {
 
   private buildDescription(task: Task): string {
     const fileName = path.basename(task.logFilePath);
-    return task.status === 'done' ? `${vscode.l10n.t('Done')} · ${fileName}` : fileName;
+    const parts: string[] = [];
+    if (task.jiraIssueKey) {
+      parts.push(task.jiraIssueKey);
+    }
+    if (task.status === 'done') {
+      parts.push(vscode.l10n.t('Done'));
+    }
+    parts.push(fileName);
+    return parts.join(' · ');
   }
 }
 
