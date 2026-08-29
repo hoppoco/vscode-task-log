@@ -111,7 +111,7 @@ export async function activate(
     registerSetParent(taskStore, treeProvider),
     ...registerSetFocus(taskStore, statusBar),
     ...registerMarkStatus(taskStore, treeProvider, codeLensProvider),
-    registerDeleteTask(taskStore, treeProvider, codeLensProvider),
+    registerDeleteTask(taskStore, treeProvider, codeLensProvider, statusBar),
     registerReanchorTask(taskStore, treeProvider, codeLensProvider),
     registerRevealTaskInEditor(),
     registerToggleStatusAtCursor(taskStore, treeProvider, codeLensProvider),

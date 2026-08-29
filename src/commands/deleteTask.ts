@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { Task } from '../models/task';
 import { TaskNotFoundError, type TaskStore } from '../services/taskStore';
+import type { StatusBarController } from '../views/statusBarController';
 import type { TaskCodeLensProvider } from '../views/taskCodeLensProvider';
 import type { TaskTreeViewProvider } from '../views/taskTreeViewProvider';
 import { pickTask } from './pickTask';
@@ -9,6 +10,7 @@ export function registerDeleteTask(
   taskStore: TaskStore,
   treeProvider: TaskTreeViewProvider,
   codeLensProvider: TaskCodeLensProvider,
+  statusBar: StatusBarController,
 ): vscode.Disposable {
   return vscode.commands.registerCommand('taskLog.deleteTask', async (preselected?: Task) => {
     const target =
@@ -69,6 +71,9 @@ export function registerDeleteTask(
       await taskStore.delete(target.id, { cascade });
       treeProvider.refresh();
       codeLensProvider.refresh();
+      // フォーカス中タスク(またはcascade削除された子孫)が削除された場合、
+      // render()の自己修復ロジックにより、その場でフォーカス表示をクリアする
+      statusBar.render();
     } catch (error) {
       if (error instanceof TaskNotFoundError) {
         vscode.window.showErrorMessage(
