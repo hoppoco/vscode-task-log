@@ -96,7 +96,21 @@ async function createTaskFromCurrentSelection(
 }
 
 suite('Task Log 結合テスト', () => {
+  // 各テストが開いたエディタを蓄積させない。前のテストのタブが残っていると、
+  // 新しく開いたエディタがまだactiveTextEditorになりきっていないタイミングで
+  // 次のコマンドが実行され、activeTextEditor依存のコマンド(createTaskFromSelection等)
+  // が意図しないエディタを見てしまう(またはactiveTextEditorがundefinedのまま早期returnする)
+  // ことがある。低速な環境(CI・初回起動時)ほど顕在化するため、明示的に閉じてテストを独立させる
+  teardown(async () => {
+    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+  });
+
   test('主要コマンドが登録されている', async () => {
+    // package.jsonのcontributes.commandsは未アクティベートでも登録されるはずだが、
+    // 拡張ホストの初期化が遅い環境(CI・初回起動時)では、このテストが他より先に
+    // 走ることでコマンド登録が完了しきっていないことがある。他のテストと同様、
+    // 明示的にアクティベーションを待ってから確認する
+    await getApi();
     const commands = await vscode.commands.getCommands(true);
     for (const command of [
       'taskLog.createTaskFromSelection',
